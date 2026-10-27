@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 public class ClueReadManager : MonoBehaviour
@@ -8,6 +9,9 @@ public class ClueReadManager : MonoBehaviour
     [Header("Reading UI")]
     public GameObject readingCanvas;
     public TMP_Text clueText;
+
+    [Header("Image UI")]
+    public Image clueImage;
 
     private void Awake()
     {
@@ -22,17 +26,59 @@ public class ClueReadManager : MonoBehaviour
         }
 
         readingCanvas.SetActive(false);
+
+        if (clueImage != null)
+            clueImage.gameObject.SetActive(false);
     }
 
+    // Existing text clue functionality
     public void OpenClue(string text)
     {
         readingCanvas.SetActive(true);
-        clueText.text = text;
+
+        if (clueText != null)
+        {
+            clueText.text = text;
+            clueText.gameObject.SetActive(true);
+        }
+
+        if (clueImage != null)
+            clueImage.gameObject.SetActive(false);
+    }
+
+    // Display an image inside the reading canvas
+    public void OpenImageClue(Sprite image)
+    {
+        readingCanvas.SetActive(true);
+
+        if (clueText != null)
+        {
+            clueText.text = "";
+            clueText.gameObject.SetActive(false);
+        }
+
+        if (clueImage != null)
+        {
+            clueImage.sprite = image;
+            clueImage.preserveAspect = true;
+            clueImage.gameObject.SetActive(image != null);
+        }
     }
 
     public void CloseClue()
     {
         readingCanvas.SetActive(false);
-        clueText.text = "";
+
+        if (clueText != null)
+        {
+            clueText.text = "";
+            clueText.gameObject.SetActive(true);
+        }
+
+        if (clueImage != null)
+        {
+            clueImage.sprite = null;
+            clueImage.gameObject.SetActive(false);
+        }
     }
 }

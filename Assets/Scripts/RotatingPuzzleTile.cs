@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,13 +16,11 @@ public class RotatingPuzzleTile : MonoBehaviour
 
     private void Awake()
     {
-        // Find Button on this object or a parent.
         button = GetComponent<Button>();
 
         if (button == null)
             button = GetComponentInParent<Button>();
 
-        // Find the image to rotate.
         if (imageToRotate == null)
         {
             Image[] images = GetComponentsInChildren<Image>(true);
@@ -76,8 +73,27 @@ public class RotatingPuzzleTile : MonoBehaviour
 
     public void RotateTile()
     {
-        if (puzzleManager != null && puzzleManager.IsSolved)
+        if (puzzleManager == null)
+        {
+            Debug.LogWarning(name + ": Puzzle Manager is not assigned!", this);
             return;
+        }
+
+        if (puzzleManager.IsSolved)
+            return;
+
+        // Prevent rotation until the clue has been read.
+        if (!puzzleManager.clueRead)
+        {
+            if (puzzleManager.statusText != null)
+            {
+                puzzleManager.statusText.text =
+                    "Find the clue to solve the puzzle and open the door.";
+            }
+
+            Debug.Log("Read the clue before solving the puzzle.");
+            return;
+        }
 
         if (imageToRotate == null)
         {
@@ -85,18 +101,14 @@ public class RotatingPuzzleTile : MonoBehaviour
             return;
         }
 
-        // Rotate by 90 degrees each click.
+        // Rotate 90 degrees clockwise.
         rotationStep = (rotationStep + 1) % 4;
 
         ApplyRotation();
 
-        Debug.Log(
-            name + ": Rotation step = " + rotationStep,
-            this
-        );
+        Debug.Log(name + ": Rotation step = " + rotationStep, this);
 
-        if (puzzleManager != null)
-            puzzleManager.CheckPuzzle();
+        puzzleManager.CheckPuzzle();
     }
 
     private void ApplyRotation()

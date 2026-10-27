@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using TMPro;
 
@@ -11,6 +10,11 @@ public class RotationPuzzleManager : MonoBehaviour
     public TMP_Text statusText;
     public GameObject puzzleCanvas;
 
+    [Header("Clue Settings")]
+    public bool clueRead = false;
+    public string clueRequiredMessage =
+        "Find the clue to solve the puzzle and open the door.";
+
     [Header("Door")]
     public GameObject doorObject;
 
@@ -18,26 +22,29 @@ public class RotationPuzzleManager : MonoBehaviour
     public AudioSource audioSource;
     public AudioClip doorSound;
 
+    [Header("Puzzle Settings")]
+    public int gridSize = 4;
+
     public bool IsSolved { get; private set; }
 
     private void Start()
     {
         IsSolved = false;
 
-        if (tiles == null || tiles.Length != 9)
+        int expectedTileCount = gridSize * gridSize;
+
+        if (tiles == null || tiles.Length != expectedTileCount)
         {
             Debug.LogError(
-                "RotationPuzzleManager: Assign exactly 9 tiles!",
+                $"Assign exactly {expectedTileCount} tiles!",
                 this
             );
             return;
         }
 
-        // Keep the puzzle visible at startup.
         if (puzzleCanvas != null)
             puzzleCanvas.SetActive(true);
 
-        // Connect and randomize all tiles.
         foreach (RotatingPuzzleTile tile in tiles)
         {
             if (tile == null)
@@ -50,10 +57,17 @@ public class RotationPuzzleManager : MonoBehaviour
             tile.RandomizeRotation();
         }
 
-        if (statusText != null)
-            statusText.text = "Rotate all tiles to 0 degrees";
+        UpdateStatus();
+    }
 
-        // Do not check the solution at startup.
+    public void MarkClueAsRead()
+    {
+        clueRead = true;
+
+        if (statusText != null && !IsSolved)
+            statusText.text = "Clue found! Solve the puzzle to open the door.";
+
+        Debug.Log("Puzzle clue has been read.");
     }
 
     public void CheckPuzzle()
@@ -61,45 +75,58 @@ public class RotationPuzzleManager : MonoBehaviour
         if (IsSolved)
             return;
 
-        if (tiles == null || tiles.Length != 9)
+        // Prevent solving before reading the clue.
+        if (!clueRead)
+        {
+            if (statusText != null)
+                statusText.text = clueRequiredMessage;
+
+            return;
+        }
+
+        int expectedTileCount = gridSize * gridSize;
+
+        if (tiles == null || tiles.Length != expectedTileCount)
             return;
 
-        // Every tile must be at rotation step 0.
         foreach (RotatingPuzzleTile tile in tiles)
         {
             if (tile == null || !tile.IsCorrect())
             {
                 if (statusText != null)
-                    statusText.text =
-                        "Image incomplete - keep rotating";
+                    statusText.text = "Image incomplete - keep rotating.";
 
                 return;
             }
         }
 
-        // All nine tiles are correct.
         IsSolved = true;
 
-        Debug.Log(
-            "PUZZLE SOLVED! All tiles are at rotation step 0.",
-            this
-        );
+        Debug.Log("PUZZLE SOLVED!");
 
         if (statusText != null)
             statusText.text = "ACCESS GRANTED";
 
-        // Play sound before disabling any related objects.
         if (audioSource != null && doorSound != null)
             audioSource.PlayOneShot(doorSound);
 
-        // Disable the door immediately. No animation.
         if (doorObject != null)
             doorObject.SetActive(false);
         else
             Debug.LogWarning("Door Object is not assigned!", this);
 
-        // Close the puzzle UI.
         if (puzzleCanvas != null)
             puzzleCanvas.SetActive(false);
+    }
+
+    private void UpdateStatus()
+    {
+        if (statusText == null)
+            return;
+
+        if (!clueRead)
+            statusText.text = clueRequiredMessage;
+        else
+            statusText.text = "Clue found! Solve the puzzle to open the door.";
     }
 }
